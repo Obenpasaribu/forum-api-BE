@@ -13,6 +13,24 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
+      - name: Validate deployment secrets
+        env:
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SERVER_USERNAME: ${{ secrets.SERVER_USERNAME }}
+          SERVER_SSH_KEY: ${{ secrets.SERVER_SSH_KEY }}
+        run: |
+          missing=()
+          for name in SERVER_HOST SERVER_USERNAME SERVER_SSH_KEY; do
+            if [ -z "${!name}" ]; then
+              missing+=("$name")
+            fi
+          done
+
+          if [ "${#missing[@]}" -gt 0 ]; then
+            printf '::error::Missing GitHub Actions secret(s): %s. Configure them in Settings > Secrets and variables > Actions.\n' "${missing[*]}"
+            exit 1
+          fi
+
       - name: Deploy to EC2 server over SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
