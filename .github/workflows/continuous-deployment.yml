@@ -55,7 +55,8 @@ jobs:
             npm run migrate:up
             pm2 restart forum-api --update-env || pm2 start src/server.js --name forum-api
             for attempt in 1 2 3 4 5 6 7 8 9 10; do
-              if curl --fail --silent --show-error https://34-101-133-113.sslip.io/; then
+              if curl --fail --silent --show-error "https://34-101-133-113.sslip.io/"
+              then
                 exit 0
               fi
               sleep 2
