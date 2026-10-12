@@ -1,16 +1,19 @@
 name: Continuous Deployment
 
-# Deploys automatically to the EC2 server whenever code is pushed to the
-# main branch, as required by criterion 2. Uses appleboy/ssh-action to run
-# a deploy script over SSH on the target server.
+# Deploys to the VPS after the Continuous Integration workflow succeeds.
 on:
-  push:
+  workflow_run:
+    workflows:
+      - Continuous Integration
+    types:
+      - completed
     branches:
       - main
       - master
 
 jobs:
   deploy:
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' }}
     runs-on: ubuntu-latest
     steps:
       - name: Validate deployment secrets
@@ -38,9 +41,29 @@ jobs:
           username: ${{ secrets.SERVER_USERNAME }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: ${{ secrets.SERVER_PORT || 22 }}
+          envs: DEPLOY_BRANCH
+          script_stop: true
           script: |
             cd ~/forum-api
-            git pull origin main
+            case "$DEPLOY_BRANCH" in
+              main|master) ;;
+              *) echo "Unsupported deployment branch: $DEPLOY_BRANCH" >&2; exit 1 ;;
+            esac
+            git pull origin "$DEPLOY_BRANCH"
             npm ci --omit=dev
             npm run migrate:up
+            sudo cp nginx/forumapi.conf /etc/nginx/sites-available/forumapi.conf
+            sudo ln -sfn /etc/nginx/sites-available/forumapi.conf /etc/nginx/sites-enabled/forumapi.conf
+            sudo nginx -t
+            sudo systemctl reload nginx
             pm2 restart forum-api || pm2 start src/server.js --name forum-api
+            for attempt in 1 2 3 4 5 6 7 8 9 10; do
+              if curl --fail --silent --show-error https://34-101-133-113.sslip.io/; then
+                exit 0
+              fi
+              sleep 2
+            done
+            echo "API health check failed after restart" >&2
+            exit 1
+        env:
+          DEPLOY_BRANCH: ${{ github.event.workflow_run.head_branch }}

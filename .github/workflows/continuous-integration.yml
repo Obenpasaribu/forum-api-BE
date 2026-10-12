@@ -1,12 +1,17 @@
 name: Continuous Integration
 
-# Runs the full automated test suite (unit + integration + functional tests)
-# on every pull request targeting the main branch, as required by criterion 1.
+# Runs linting, database migrations, and the automated test suite on pushes
+# and pull requests targeting main or master.
 on:
+  push:
+    branches:
+      - main
+      - master
   pull_request:
     branches:
       - main
       - master
+  workflow_dispatch:
 
 jobs:
   test:
@@ -47,7 +52,6 @@ jobs:
 
       - name: Run lint
         run: npx eslint src --max-warnings=0
-        continue-on-error: true
 
       - name: Run database migrations
         run: npm run migrate:up

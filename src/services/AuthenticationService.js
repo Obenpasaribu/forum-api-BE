@@ -1,4 +1,3 @@
-const AuthenticationError = require('../commons/exceptions/AuthenticationError');
 const password = require('../utils/password');
 const token = require('../utils/token');
 
