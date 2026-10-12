@@ -42,8 +42,8 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: ${{ secrets.SERVER_PORT || 22 }}
           envs: DEPLOY_BRANCH
-          script_stop: true
           script: |
+            set -e
             cd ~/forum-api
             case "$DEPLOY_BRANCH" in
               main|master) ;;
