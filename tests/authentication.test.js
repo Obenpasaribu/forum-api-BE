@@ -26,4 +26,26 @@ describe('authentication error handling', () => {
       .rejects.toThrow(new InvariantError('refresh token tidak valid'));
     expect(authenticationRepository.checkTokenAvailability).not.toHaveBeenCalled();
   });
+
+  it('throws AuthenticationError when user is not found during getPasswordByUsername', async () => {
+    const fakePool = {
+      query: jest.fn().mockResolvedValue({ rowCount: 0, rows: [] }),
+    };
+    const UserRepository = require('../src/repositories/UserRepository');
+    const userRepository = new UserRepository(fakePool);
+
+    await expect(userRepository.getPasswordByUsername('nonexistent_user'))
+      .rejects.toThrow(new AuthenticationError('kredensial yang Anda masukkan salah'));
+  });
+
+  it('throws InvariantError when refresh token is not found in database', async () => {
+    const fakePool = {
+      query: jest.fn().mockResolvedValue({ rowCount: 0, rows: [] }),
+    };
+    const AuthenticationRepository = require('../src/repositories/AuthenticationRepository');
+    const authenticationRepository = new AuthenticationRepository(fakePool);
+
+    await expect(authenticationRepository.checkTokenAvailability('valid-jwt-not-in-db'))
+      .rejects.toThrow(new InvariantError('refresh token tidak valid'));
+  });
 });
