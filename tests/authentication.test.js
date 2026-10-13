@@ -27,7 +27,7 @@ describe('authentication error handling', () => {
     expect(authenticationRepository.checkTokenAvailability).not.toHaveBeenCalled();
   });
 
-  it('throws AuthenticationError when user is not found during getPasswordByUsername', async () => {
+  it('throws InvariantError when user is not found during getPasswordByUsername', async () => {
     const fakePool = {
       query: jest.fn().mockResolvedValue({ rowCount: 0, rows: [] }),
     };
@@ -35,7 +35,11 @@ describe('authentication error handling', () => {
     const userRepository = new UserRepository(fakePool);
 
     await expect(userRepository.getPasswordByUsername('nonexistent_user'))
-      .rejects.toThrow(new AuthenticationError('kredensial yang Anda masukkan salah'));
+      .rejects.toMatchObject({
+        name: 'InvariantError',
+        statusCode: 400,
+        message: 'username tidak ditemukan',
+      });
   });
 
   it('throws InvariantError when refresh token is not found in database', async () => {

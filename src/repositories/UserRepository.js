@@ -1,6 +1,5 @@
 const { generateId } = require('../utils/id');
 const InvariantError = require('../commons/exceptions/InvariantError');
-const AuthenticationError = require('../commons/exceptions/AuthenticationError');
 
 class UserRepository {
   constructor(pool) {
@@ -35,7 +34,7 @@ class UserRepository {
     };
     const result = await this._pool.query(query);
     if (!result.rowCount) {
-      throw new AuthenticationError('kredensial yang Anda masukkan salah');
+      throw new InvariantError('username tidak ditemukan');
     }
     return result.rows[0];
   }
