@@ -20,8 +20,8 @@ class AuthenticationService {
   }
 
   async refreshAccessToken(refreshToken) {
-    await this._authenticationRepository.checkTokenAvailability(refreshToken);
     const { id } = token.verifyRefreshToken(refreshToken);
+    await this._authenticationRepository.checkTokenAvailability(refreshToken);
     return token.generateAccessToken({ id });
   }
 
