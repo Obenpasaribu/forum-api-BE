@@ -42,14 +42,19 @@ describe('authentication error handling', () => {
       });
   });
 
-  it('throws InvariantError when refresh token is not found in database', async () => {
+  it('returns the expected error when logout token is not found in database', async () => {
     const fakePool = {
       query: jest.fn().mockResolvedValue({ rowCount: 0, rows: [] }),
     };
     const AuthenticationRepository = require('../src/repositories/AuthenticationRepository');
     const authenticationRepository = new AuthenticationRepository(fakePool);
+    const authenticationService = new AuthenticationService(null, authenticationRepository);
 
-    await expect(authenticationRepository.checkTokenAvailability('valid-jwt-not-in-db'))
-      .rejects.toThrow(new InvariantError('refresh token tidak valid'));
+    await expect(authenticationService.logout('invalid-refresh-token'))
+      .rejects.toMatchObject({
+        name: 'InvariantError',
+        statusCode: 400,
+        message: 'refresh token tidak ditemukan di database',
+      });
   });
 });
